@@ -11,27 +11,29 @@
 \title{The Externalization Horizon: An Information-Theoretic Boundary \\
 for Internal States in Active Inference Systems}
 
-\author{Mahault Albarracin\inst{1,2} \and Alejandro Jimenez Rodriguez\inst{3}}
+\author{Alejandro Jimenez Rodriguez\inst{1} \and Mahault Albarracin\inst{1,2,3,4}}
 
-\authorrunning{M. Albarracin, A. Jimenez Rodriguez}
+\authorrunning{A. Jimenez Rodriguez, M. Albarracin}
 
 \institute{
-VERSES AI, Los Angeles, USA \\
+School of Computing and Digital Technologies, Sheffield Hallam University, Sheffield, United Kingdom \\
+\email{a.jimenez@shu.ac.uk}
 \and
-Universit\'{e} du Qu\'{e}bec \`{a} Montr\'{e}al, Canada \\
+LANCI -- Laboratoire d'Analyse Cognitive de l'Information, Universit\'{e} du Qu\'{e}bec \`{a} Montr\'{e}al, Canada \\
 \email{mahault.albarracin@gmail.com}
 \and
-Sheffield Hallam University, Sheffield, United Kingdom \\
-\email{a.jimenez@shu.ac.uk}
+ISS -- Institut Sant\'{e} et Soci\'{e}t\'{e}, Universit\'{e} du Qu\'{e}bec \`{a} Montr\'{e}al, Canada
+\and
+IREF -- Institut de Recherches F\'{e}ministes, Universit\'{e} du Qu\'{e}bec \`{a} Montr\'{e}al, Canada
 }
 
 \maketitle
 
 \begin{abstract}
-Active inference agents maintain internal belief states that drive action selection through Expected Free Energy minimization. A fundamental question for artificial general intelligence is: \emph{when can these internal states be inferred or influenced by external observers?} We introduce the \textbf{externalization horizon}, an information-theoretic quantity that measures the effective coupling between an agent's internal states and the observable environment. Unlike the Markov blanket---which provides a binary, structural partition---the externalization horizon is a continuous, parameter-dependent measure that admits phase transitions. We derive closed-form expressions for a linear-Gaussian active inference agent coupled to a stochastic environment, defining two complementary quantities: \emph{controllability} $\mathcal{R}_a$ (how much internal states influence the world) and \emph{observability} $\mathcal{R}_o$ (how much internal states can be inferred from observations). We show that a critical threshold $r_s$ exists---analogous to a Schwarzschild radius---below which internal states become effectively ``dark'': neither externalizable nor observable. We extend the framework to multi-agent settings with and without Theory of Mind, and validate our analytical results with simulations demonstrating the horizon's dependence on noise, coupling strength, and policy precision. We discuss implications for AGI interpretability, multi-agent coordination, and the relationship between communicable and private cognitive states.
+Active inference agents maintain internal belief states that drive action selection through Expected Free Energy (EFE) minimization. A fundamental question for artificial general intelligence is: \emph{when can these internal states be inferred by external observers?} We introduce the \textbf{externalization horizon}: an information-theoretic boundary that separates \emph{readable} agents from \emph{dark} ones. Our key insight is that this boundary is \textbf{observer-dependent}: readability is not a property of the agent alone, but emerges from the \emph{similarity} between the observer's generative model and the agent's actual dynamics. The same agent can be transparent to one observer and opaque to another, depending on how well each observer's model matches the agent's internal parameters. We formalize this in the linear-Gaussian setting, where both the agent (Kalman-filter perception with EFE-optimal linear policy) and the observer (Kalman-filter-based Theory of Mind) perform principled active inference. We derive closed-form expressions for the externalization measure, show that policy gain mismatch dominates readability degradation through the observation model, and identify innovation consistency as a metric that detects model misspecification invisible to correlation. We validate these results with simulations and discuss implications for AGI interpretability, multi-agent coordination, and the boundary between communicable and private cognitive states.
 \end{abstract}
 
-\keywords{Active Inference \and Markov Blankets \and Information Theory \and Empowerment \and Theory of Mind \and Interpretability}
+\keywords{Active Inference \and Markov Blankets \and Information Theory \and Model Mismatch \and Theory of Mind \and Interpretability}
 
 %% ============================================================
 \section{Introduction}
@@ -46,16 +48,16 @@ However, the Markov blanket is a \emph{structural} property of a graphical model
 
 A door may exist between two rooms; the Markov blanket tells us the door is there, but not whether it is open, ajar, or sealed shut. Two agents may share identical graphical structure yet differ radically in how much their internal states influence---or are readable from---the environment, depending on noise levels, coupling strengths, and policy precision.
 
-We propose the \textbf{externalization horizon}: a continuous, parameter-dependent, information-theoretic measure of the effective permeability of an agent's boundary. Our contributions are:
+We propose the \textbf{externalization horizon}: a continuous, observer-dependent, information-theoretic boundary that determines when an agent's internal states are readable from the observable world. Our contributions are:
 
 \begin{enumerate}
-    \item We derive closed-form expressions for the \emph{externalization} of internal states in a linear-Gaussian active inference agent, decomposed into \textbf{controllability} (internal $\to$ environment) and \textbf{observability} (internal $\to$ observer inference).
-    \item We identify a \textbf{critical threshold} $r_s$ below which internal states are effectively ``dark''---an information-theoretic analogue of the Schwarzschild radius. This threshold depends on the signal-to-noise ratio of the agent-environment coupling.
-    \item We extend the framework to \textbf{multi-agent systems}, distinguishing between environment-mediated inference (the ``screen'' scenario) and direct behavioral observation, connecting to Theory of Mind.
-    \item We validate these results through \textbf{simulations} that demonstrate phase transitions in externalization as a function of coupling strength, noise, and policy gain.
+    \item We define \textbf{externalization} as the transfer entropy from beliefs to environment, deriving closed-form expressions in the linear-Gaussian case that decompose into coupling strength, belief variability, and noise.
+    \item We show that the externalization horizon is \textbf{observer-dependent}: readability emerges from the \emph{similarity} between the observer's generative model and the agent's actual dynamics, not from a property of the agent alone. The same agent can be transparent to one observer and opaque to another.
+    \item We identify \textbf{policy gain mismatch} as the dominant factor in readability degradation (through the observation model $H_B = \beta K_B$), and \textbf{innovation consistency} as a diagnostic that detects model misspecification invisible to correlation.
+    \item We validate with simulations demonstrating observer-dependent horizons, dynamic opacity from parameter change, and feedback coupling as a special case of model mismatch.
 \end{enumerate}
 
-The externalization horizon provides a principled answer to questions that the Markov blanket framework alone cannot address: When is an AI system interpretable? When can agents model each other? What is the boundary between communicable and private cognitive states?
+The externalization horizon provides a principled answer to questions that the Markov blanket framework alone cannot address: When is an AI system interpretable---and \emph{to whom}? When can agents model each other? What is the boundary between communicable and private cognitive states, and how does that boundary depend on the observer?
 
 %% ============================================================
 \section{Related Work}
@@ -72,7 +74,7 @@ Empowerment \cite{klyubin2005empowerment,salge2014empowerment} quantifies the ch
 Transfer entropy \cite{schreiber2000measuring} measures directed information flow between time series: $T_{X \to Y} = I(Y_{t+1}; X_t | Y_t)$. For Gaussian variables, transfer entropy is equivalent to Granger causality \cite{barnett2009granger}. Our externalization measure $I(\mu_t; e_{t+1} | e_t)$ is structurally identical to transfer entropy from beliefs to environment. Importantly, Ay and Polani~\cite{ay2008information} showed that information flow defined via interventional distributions (do-calculus) is not the same as statistical association---transfer entropy can vanish even when causal influence exists. Kolchinsky and Wolpert~\cite{kolchinsky2018semantic} defined \emph{semantic information} as the syntactic information causally necessary for a system to maintain its own existence, introducing a \emph{viability threshold} below which the agent cannot sustain itself---the closest existing formalism to our externalization horizon. Lizier et al.~\cite{lizier2008phase} demonstrated that transfer entropy peaks at phase transitions in random Boolean networks, showing that information transfer is maximized at the edge of chaos. We go beyond measuring information flow to identifying the critical threshold where this flow collapses, providing a named boundary concept.
 
 \paragraph{Theory of Mind and Multi-Agent Inference.}
-Theory of Mind (ToM) in artificial agents has been formalized through inverse planning \cite{baker2017rational}, meta-learning \cite{rabinowitz2018machine}, and active inference approaches to social cognition \cite{friston2015duet,veissiere2020thinking,vasil2020communication}. Friston and Frith~\cite{friston2015duet} showed that communication between agents can be modeled as coupled inference, where each agent inverts a generative model of the other's behavior. Maisto et al.~\cite{maisto2023interactive} operationalized this as ``interactive inference,'' where agents simultaneously minimize their own free energy and select actions that make their intentions \emph{legible} to others. Albarracin et al.~\cite{albarracin2024protentions} formalized shared anticipatory structures in multi-agent active inference using category theory, while Albarracin et al.~\cite{albarracin2026empathy} demonstrated that empathic perspective-taking through self-other model transformation induces robust cooperation in iterated games without explicit communication. Our framework provides a \emph{necessary condition} for all such social inference: an observer can only model another agent's internal states if those states are sufficiently externalized---if the agent's externalization exceeds the observer's inference threshold.
+Theory of Mind (ToM) in artificial agents has been formalized through inverse planning \cite{baker2017rational}, meta-learning \cite{rabinowitz2018machine}, and active inference approaches to social cognition \cite{friston2015duet,veissiere2020thinking,vasil2020communication}. Friston and Frith~\cite{friston2015duet} showed that communication between agents can be modeled as coupled inference, where each agent inverts a generative model of the other's behavior. Maisto et al.~\cite{maisto2023interactive} operationalized this as ``interactive inference,'' where agents simultaneously minimize their own free energy and select actions that make their intentions \emph{legible} to others. Albarracin et al.~\cite{albarracin2024protentions} formalized shared anticipatory structures in multi-agent active inference using category theory, while Albarracin et al.~\cite{albarracin2026empathy} demonstrated that empathic perspective-taking through self-other model transformation induces robust cooperation in iterated games without explicit communication. Our framework provides a \emph{dual necessary condition} for all such social inference: an observer can model another agent's internal states only if (i)~the agent sufficiently externalizes (deposits information in the environment), AND (ii)~the observer's generative model of the agent is sufficiently accurate. Externalization is necessary but not sufficient---an observer with a misspecified model of the agent's dynamics will fail to read even heavily externalized states. This connects to the inverse reinforcement learning literature \cite{baker2017rational}, where inferring an agent's reward function requires a correct model of its planning algorithm.
 
 \paragraph{Neurophenomenology and the Privacy of Experience.}
 Generative neurophenomenology \cite{monnier2025generative} extends Varela's program \cite{varela1996neurophenomenology} to interpersonal settings, proposing that shared experience emerges through ``mutual incorporation'' in an ``interbeing space.'' Ramstead et al.~\cite{ramstead2022generative} formalized ``generative passages'' connecting phenomenological descriptions to neural mechanisms through the mathematical structure of generative models, while Sandved-Smith et al.~\cite{sandvedsmith2025deep} applied deep computational neurophenomenology to investigate the ``how'' of experience. Our framework formalizes the complementary question: when does mutual incorporation fail---when do two agents remain strangers despite interaction?
@@ -86,12 +88,12 @@ We begin with a minimal model that admits closed-form analysis, then generalize.
 
 \subsection{A Simple Active Inference Agent}
 
-Consider an agent with scalar internal state $x_t \in \mathbb{R}$, evolving as:
+Consider an agent with scalar internal state $x_t \in \mathbb{R}$, evolving as an AR(1) process with drift:
 \begin{equation}
-    x_{t+1} = x_t + v + \omega_t, \quad \omega_t \sim \mathcal{N}(0, \sigma_x^2)
+    x_{t+1} = \varphi \, x_t + v + \omega_t, \quad \omega_t \sim \mathcal{N}(0, \sigma_x^2)
     \label{eq:state_dynamics}
 \end{equation}
-where $v$ is a drift term and $\omega_t$ is process noise. The agent receives noisy observations:
+where $\varphi \in [0,1)$ is the state persistence, $v$ is a drift term, and $\omega_t$ is process noise. The agent receives noisy observations:
 \begin{equation}
     o_t = x_t + \xi_t, \quad \xi_t \sim \mathcal{N}(0, \sigma_o^2)
     \label{eq:observations}
@@ -99,7 +101,7 @@ where $v$ is a drift term and $\omega_t$ is process noise. The agent receives no
 
 Under a Kalman filter---the optimal Bayesian estimator for this linear-Gaussian system, which can be derived as gradient descent on variational free energy in generalized coordinates \cite{friston2008variational,baltieri2020kalman}---the agent maintains a belief $\mu_t = \mathbb{E}[x_t \mid o_{1:t}]$ that evolves as:
 \begin{equation}
-    \mu_{t+1} = \mu_t + v + K_f(o_{t+1} - \mu_t - v)
+    \mu_{t+1} = \varphi \mu_t + v + K_f(o_{t+1} - \varphi \mu_t - v)
     \label{eq:belief_update}
 \end{equation}
 where $K_f$ is the steady-state Kalman gain. The agent selects actions through a linear policy:
@@ -157,6 +159,71 @@ The externalization depends on three factors:
     \item \textbf{Belief variability} $\mathrm{Var}(\mu_t \mid e_t)$: how much the belief varies independently of the environment.
     \item \textbf{Environment noise} $\sigma_e^2$: how much the environment is driven by its own stochasticity.
 \end{itemize}
+
+\subsection{Observer-Dependent Readability}
+\label{sec:readability}
+
+The externalization measure $\mathcal{E}(\mu \to e)$ quantifies how much information agent $A$ \emph{deposits} into the environment. But a fundamental question remains: \emph{who can read it?} We now show that readability is not a property of the agent alone, but depends on the \emph{similarity} between the observer's generative model and the agent's actual dynamics.
+
+Consider an observer $B$ who observes the environment with noise:
+\begin{equation}
+    o^B_t = e_t + \eta_t, \quad \eta_t \sim \mathcal{N}(0, \sigma_B^2)
+    \label{eq:obs_B}
+\end{equation}
+Agent $B$ seeks to infer $A$'s beliefs $\mu^A_t$ by maintaining a generative model of $A$'s dynamics. Under active inference, this constitutes \emph{sophisticated inference}~\cite{friston2015duet}: $B$ minimizes variational free energy over a model of $A$'s internal states. In the linear-Gaussian case, $B$'s generative model takes the form:
+\begin{align}
+    s_{t+1} &= \varphi_B \, s_t + v_B + w_t, \quad w_t \sim \mathcal{N}(0, Q_B) \label{eq:tom_B_transition} \\
+    z_t &= H_B \, s_t + \varepsilon_t, \quad \varepsilon_t \sim \mathcal{N}(0, R_B) \label{eq:tom_B_observation}
+\end{align}
+where $s_t$ is $B$'s estimate of $A$'s hidden belief state, $z_t = o^B_{t+1} - \rho \, o^B_t$ is the innovation $B$ extracts from consecutive environment observations, $\varphi_B$ is $B$'s assumed belief persistence for $A$, $v_B$ is $B$'s assumed drift, and:
+\begin{equation}
+    H_B = \beta K_B, \quad R_B = \sigma_e^2 + \sigma_B^2(1 + \rho^2)
+    \label{eq:H_B}
+\end{equation}
+with $K_B$ being $B$'s assumed policy gain for $A$. The process noise $Q_B$ is derived from $B$'s assumed Kalman gain and prediction variance for $A$'s filter.
+
+The crucial point is that $B$'s model parameters $\boldsymbol{\theta}_B = (\varphi_B, v_B, K_B)$ may differ from $A$'s actual parameters $\boldsymbol{\theta}_A = (\varphi, v, K)$. The \textbf{model mismatch vector} is:
+\begin{equation}
+    \boldsymbol{\delta} = \boldsymbol{\theta}_B - \boldsymbol{\theta}_A = (\delta_\varphi, \delta_v, \delta_K)
+    \label{eq:mismatch}
+\end{equation}
+
+VFE minimization over $q(s_t) = \mathcal{N}(m^B_t, P^B_t)$ yields a Kalman filter---the exact solution in the LG case. When $\boldsymbol{\delta} = \mathbf{0}$ (matched model), $B$'s inference is optimal: $m^B_t$ tracks $\mu^A_t$ with accuracy limited only by observation noise. When $\boldsymbol{\delta} \neq \mathbf{0}$ (misspecified model), $B$'s inference degrades systematically.
+
+\begin{proposition}[Observer-Dependent Readability]
+\label{prop:readability}
+The readability of agent $A$ by observer $B$, measured as $R^2(\mu^A, m^B)$, satisfies:
+\begin{enumerate}
+    \item $R^2$ peaks at $\boldsymbol{\delta} = \mathbf{0}$ (matched model) and decays with $|\boldsymbol{\delta}|$.
+    \item Policy gain mismatch $\delta_K$ dominates readability degradation, because $K_B$ enters $B$'s \emph{observation model} $H_B = \beta K_B$, directly scaling the signal $B$ expects to see.
+    \item Persistence mismatch $\delta_\varphi$ affects only $B$'s \emph{transition model}, producing subtler degradation detectable through the \textbf{innovation consistency ratio} $\mathrm{ICR} = \mathrm{Var}(\text{innov})/S$, which departs from $1$ under misspecification even when $R^2$ remains high.
+\end{enumerate}
+\end{proposition}
+
+The \textbf{externalization horizon} is now defined as a boundary in model space:
+\begin{equation}
+    \mathcal{H}(A) = \left\{ \boldsymbol{\theta}_B : R^2\!\left(\mu^A, m^B(\boldsymbol{\theta}_B)\right) = r_s \right\}
+    \label{eq:horizon_model_space}
+\end{equation}
+where $r_s$ is the readability threshold and $R^2$ denotes a readability metric. In practice, the coefficient of determination $\mathrm{CoD} = 1 - \mathrm{MSE}/\mathrm{Var}(\mu^A)$ is preferable to the squared correlation $\mathrm{corr}^2$, because the latter is scale-invariant and fails to penalize the systematic bias and scale errors that arise when $K_B \neq K_A$ (Section~\ref{sec:simulations}). This is a closed surface around the matched point $\boldsymbol{\theta}_A$ in parameter space. The same agent $A$ is readable to observers inside $\mathcal{H}(A)$ and dark to observers outside it. The horizon's shape reveals which model parameters matter most: it is narrow in the $K$-direction (high sensitivity) and wider in the $\varphi$-direction (lower sensitivity).
+
+\subsection{Feedback as Model Mismatch}
+\label{sec:feedback_mismatch}
+
+In realistic settings, the environment feeds back into the agent's state:
+\begin{equation}
+    x_{t+1} = \varphi \, x_t + \alpha \, e_t + v + \omega_t
+    \label{eq:state_feedback}
+\end{equation}
+where $\alpha$ quantifies the feedback coupling. An \textbf{$\alpha$-aware agent} incorporates an environment estimate $\hat{e}_t$ into its prediction, modifying its effective transition dynamics. An observer $B$ who assumes $\alpha = 0$ has a \emph{structurally misspecified model}: $B$'s assumed transition $\varphi_B s_t + v_B$ omits the feedback term that shapes $A$'s actual belief trajectory.
+
+This reframes the naive/aware distinction as a special case of model mismatch. Different metrics have different sensitivity to this type of misspecification:
+\begin{itemize}
+    \item \textbf{$R^2$ correlation} is insensitive to transition model errors: both the naive observer ($\alpha_B = 0$) and a matched observer ($\alpha_B = \alpha$) achieve similar $R^2$, because the Kalman filter's observation update compensates for one-step prediction errors.
+    \item \textbf{Innovation consistency ratio} $\mathrm{ICR} = \mathrm{Var}(\text{innov})/S$ clearly separates the two: the naive observer's innovations are systematically larger than predicted ($\mathrm{ICR} > 1$), while the matched observer maintains $\mathrm{ICR} \approx 1$.
+\end{itemize}
+
+This suggests that the externalization horizon has \textbf{two layers}: a \emph{correlation horizon} where $R^2$ drops below threshold (requiring large mismatch, typically in $K$), and a \emph{calibration horizon} where innovation consistency degrades (detectable at smaller mismatch, particularly in $\varphi$ or $\alpha$). An observer may be ``above'' the correlation horizon but ``below'' the calibration horizon---able to track the agent's beliefs in a correlational sense but unable to detect that its own model is wrong.
 
 %% ============================================================
 \section{The Externalization Horizon}
@@ -300,27 +367,40 @@ This depends on $K$ (policy gain) but not $\beta$ (environment coupling)---the o
 
 \subsection{Conditions for Theory of Mind}
 
-Theory of Mind---the ability of observer $B$ to maintain a model of agent $A$'s beliefs \cite{friston2015duet}---requires sufficient observable externalization:
+Theory of Mind---the ability of observer $B$ to maintain a model of agent $A$'s beliefs \cite{friston2015duet}---requires \emph{two} conditions to be jointly satisfied:
 
-\begin{proposition}[ToM Feasibility]
+\begin{proposition}[Dual ToM Condition]
+\label{prop:dual_tom}
 An observer $B$ can maintain a non-trivial model of agent $A$'s internal states only if:
-\begin{equation}
-    \mathcal{E}_{\text{obs}} > r_s^B
-    \label{eq:tom_condition}
-\end{equation}
-where $\mathcal{E}_{\text{obs}}$ is the externalization available to $B$ (via screen or direct access) and $r_s^B$ is $B$'s inference threshold (determined by $B$'s own sensory precision and model complexity).
+\begin{enumerate}
+    \item \textbf{Sufficient externalization}: $\mathcal{E}_{\text{obs}} > r_s^B$, where $\mathcal{E}_{\text{obs}}$ is the externalization available to $B$ (via screen or direct access, eqs.~\ref{eq:screen_externalization}--\ref{eq:direct_externalization}) and $r_s^B$ is $B$'s inference threshold.
+    \item \textbf{Sufficient model match}: $\boldsymbol{\theta}_B \in \mathcal{H}(A)$, i.e., $B$'s assumed parameters lie within the horizon surface (eq.~\ref{eq:horizon_model_space}) defined in Section~\ref{sec:readability}.
+\end{enumerate}
 \end{proposition}
 
-This provides a necessary condition: \emph{you cannot model what you cannot observe}. An agent whose externalization falls below the observer's threshold is effectively a ``stranger''---the observer cannot distinguish its intentional behavior from noise. This connects to Veissi\`{e}re et al.'s observation that we think \emph{through} other minds \cite{veissiere2020thinking}: such thinking requires that the other mind be sufficiently externalized.
+The first condition---\emph{you cannot model what you cannot observe}---is necessary but not sufficient. An agent whose externalization exceeds threshold deposits readable information in the environment, but an observer with a misspecified model of the agent's dynamics will fail to extract it. The second condition formalizes this: $B$'s generative model (eqs.~\ref{eq:tom_B_transition}--\ref{eq:tom_B_observation}) must be sufficiently similar to $A$'s actual dynamics for VFE minimization to produce accurate inference.
+
+This dual condition connects to Veissi\`{e}re et al.'s observation that we think \emph{through} other minds \cite{veissiere2020thinking}: such thinking requires not only that the other mind be externalized, but that we have an adequate model of \emph{how} it externalizes. The observation gain $H_B = \beta K_B$ in $B$'s generative model (eq.~\ref{eq:H_B}) determines how $B$ maps innovations to belief estimates; when $K_B \neq K$, $B$'s VFE-minimizing Kalman filter converges to a systematically biased estimate of $A$'s beliefs, even though the filter itself is performing exact inference under its (wrong) model.
+
+\subsection{Observer-Dependent Horizons}
+\label{sec:observer_horizons}
+
+The relational nature of readability means that each observer has a \emph{different} horizon for the same agent. Consider agent $A$ with fixed parameters $\boldsymbol{\theta}_A$ and two observers $B_1$, $B_2$ with parameters $\boldsymbol{\theta}_{B_1}$, $\boldsymbol{\theta}_{B_2}$:
+\begin{equation}
+    R^2(A, B_1) \neq R^2(A, B_2) \quad \text{even though } A \text{ is unchanged}
+    \label{eq:observer_dependent}
+\end{equation}
+
+A well-calibrated observer ($\boldsymbol{\theta}_{B_1} \approx \boldsymbol{\theta}_A$) achieves high $R^2$ at lower coupling $\beta K$, while a miscalibrated observer ($|\boldsymbol{\theta}_{B_2} - \boldsymbol{\theta}_A|$ large) requires much stronger externalization to cross the readability threshold. This means the \emph{effective} externalization horizon depends on the observer: agent $A$ can be simultaneously transparent to $B_1$ and dark to $B_2$.
 
 \subsection{Shared Externalization and the Interbeing Space}
 
-When two agents mutually externalize---each influencing the environment that the other observes---a \emph{shared externalization space} emerges. Define the \textbf{mutual externalization}:
+When two agents mutually externalize---each influencing the environment that the other observes---a \emph{shared externalization space} emerges. Define the \textbf{mutual readability}:
 \begin{equation}
-    \mathcal{M}(A, B) = \min\left(\mathcal{E}(A \to B), \, \mathcal{E}(B \to A)\right)
-    \label{eq:mutual_externalization}
+    \mathcal{M}(A, B) = \min\left(R^2(A, B), \, R^2(B, A)\right)
+    \label{eq:mutual_readability}
 \end{equation}
-where $\mathcal{E}(A \to B)$ is the externalization of $A$'s states as observable by $B$, and vice versa. This relates to the ``interbeing space'' of generative neurophenomenology \cite{monnier2025generative}: meaningful interpersonal experience requires that both agents' internal states be sufficiently externalized to each other.
+where $R^2(A, B)$ is $B$'s inference quality about $A$'s beliefs. Note that mutual readability depends on \emph{both} agents' externalization AND \emph{both} agents' models of each other---it is doubly relational. This connects to the ``interbeing space'' of generative neurophenomenology \cite{monnier2025generative}: meaningful interpersonal experience requires that both agents' internal states be sufficiently externalized \emph{and} that each has an adequate model of the other.
 
 When $\mathcal{M}(A, B) < r_s$, the agents interact mechanically (through environment coupling) but cannot engage in participatory sense-making---they remain strangers despite physical proximity.
 
@@ -345,6 +425,7 @@ Scale & Binary (exists / doesn't) & Continuous ($\mathcal{E} \in [0, \infty)$) \
 Parameter dep. & No & Yes ($\beta, K, \sigma_e, \sigma_\mu$) \\
 Phase transitions & No & Yes (SNR $\approx 1$) \\
 Ctrl vs.\ obs & Conflated & Separated ($\mathcal{R}_a \neq \mathcal{R}_o$) \\
+Observer dep. & No & Yes ($\boldsymbol{\theta}_B$) \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -358,42 +439,50 @@ Our work is complementary to Possati's~\cite{possati2025density} Markov blanket 
 \label{sec:simulations}
 %% ============================================================
 
-We validate the analytical results through numerical simulations of the linear-Gaussian model.\footnote{Code available at \url{https://github.com/[anonymized]/externalization-horizon}.}
+We validate the analytical results through simulations of active inference agents with Kalman-filter-based Theory of Mind.\footnote{Code available at \url{https://github.com/[anonymized]/externalization-horizon}.} Agent~$A$ performs VFE minimization (Kalman filtering) for perception and uses the EFE-optimal linear policy $a_t = K \mu_t$ \cite{baltieri2020kalman}. Observer~$B$ maintains a generative model of $A$'s belief dynamics (eqs.~\ref{eq:tom_B_transition}--\ref{eq:tom_B_observation}) and minimizes VFE via a Kalman filter---sophisticated inference over $A$'s hidden states. Transfer entropy is estimated via the Gaussian regression method: $\hat{\mathcal{E}} = \frac{1}{2}\log\bigl(\text{Var}(e_{t+1} \mid e_t) / \text{Var}(e_{t+1} \mid e_t, \mu_t)\bigr)$. Default parameters: $\varphi = 0.7$, $v = 0.3$, $K = 1$, $\rho = 0.5$, $\sigma_x = \sigma_o = \sigma_e = 1$.
 
-\subsection{Setup}
+\subsection{Externalization of an EFE-Optimal Agent}
 
-We simulate the coupled agent-environment system (\ref{eq:state_dynamics})--(\ref{eq:environment}) over $T = 50{,}000$ timesteps with steady-state Kalman filtering, varying effective coupling $\beta K \in [0, 5]$, environment noise $\sigma_e \in [0.1, 10]$, and policy gain $K \in [0.1, 2.0]$. For each configuration, we estimate transfer entropy $\hat{\mathcal{E}}(\mu \to e)$ using the Gaussian assumption (exact for this system): $\hat{\mathcal{E}} = \frac{1}{2}\log\bigl(\text{Var}(e_{t+1} \mid e_t) / \text{Var}(e_{t+1} \mid e_t, \mu_t)\bigr)$, computed via linear regression residuals.
-
-\subsection{Results}
-
-\paragraph{Phase Transition.}
-Figure~\ref{fig:phase_transition} shows externalization $\mathcal{E}$ as a function of the signal-to-noise ratio. The empirical estimates closely follow the analytical prediction $\frac{1}{2} \log(1 + \text{SNR})$. The transition at $\text{SNR} \approx 1$ is clearly visible: below this threshold, externalization is negligible (dark regime); above it, internal states become increasingly transparent.
-
-\paragraph{Horizon Surface.}
-Figure~\ref{fig:horizon_surface} shows externalization as a function of both $\beta K$ and $\sigma_e$, revealing the horizon surface---the locus where $\mathcal{E} = r_s$. The surface has the characteristic shape of a noise-coupling trade-off: higher noise requires stronger coupling to maintain externalization above threshold.
-
-\paragraph{Multi-Agent Inference.}
-Figure~\ref{fig:multi_agent} compares the screen and direct-access scenarios. In the screen scenario, the observer's inference degrades with environment noise; in the direct-access scenario, only action noise matters. The gap widens as environment noise increases, demonstrating information loss through environmental mediation.
+Figure~\ref{fig:efe_ext} establishes the fundamental result: how much information an EFE-optimal active inference agent deposits into the environment. Panel~(a) shows transfer entropy $\mathcal{E}$ as a function of coupling strength $\beta K$, with analytical predictions from Proposition~\ref{prop:closed_form} closely matched by empirical estimates ($T = 20{,}000$). Panel~(b) reveals the \emph{phase transition} in signal-to-noise ratio (SNR) space. The externalization follows $\mathcal{E} = \frac{1}{2}\ln(1 + \text{SNR})$, which interpolates between two regimes: a \emph{dark regime} (SNR $\ll 1$) where externalization grows linearly with coupling and internal states are effectively private, and a \emph{transparent regime} (SNR $\gg 1$) where externalization grows logarithmically and beliefs are readable. The critical point at $\text{SNR} = 1$ defines a natural phase boundary---the externalization horizon in its simplest form.
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.85\textwidth]{figures/phase_transition.pdf}
-    \caption{Externalization as a function of signal-to-noise ratio. Blue markers: empirical estimates from simulation. Orange crosses: analytical prediction using conditional $\sigma_\mu$. Solid line: theoretical $\frac{1}{2}\log(1 + \text{SNR})$. Dashed red line: $\text{SNR} = 1$ critical point.}
-    \label{fig:phase_transition}
+    \includegraphics[width=\textwidth]{figures/fig1_efe_externalization.pdf}
+    \caption{Externalization of an EFE-optimal active inference agent. (a)~Transfer entropy $\mathcal{E}(\mu \to e)$ vs effective coupling $\beta K$: analytical predictions (solid) match empirical estimates (dots, $T = 20{,}000$). (b)~Phase transition at $\text{SNR} = 1$: dark regime (left, linear growth) vs transparent regime (right, logarithmic growth). The agent performs VFE minimization for perception and EFE-optimal action $a_t = K\mu_t$.}
+    \label{fig:efe_ext}
 \end{figure}
 
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.85\textwidth]{figures/horizon_surface.pdf}
-    \caption{The externalization horizon surface. Color indicates externalization strength. The white contour marks $\mathcal{E} = r_s = 0.5$ nats, defining the boundary between the dark (opaque) and transparent (readable) regimes.}
-    \label{fig:horizon_surface}
-\end{figure}
+\subsection{The Externalization Horizon in Model Space}
+
+Figure~\ref{fig:horizon} is the centerpiece result: the externalization horizon visualized as a boundary in model-mismatch space. Each panel shows the coefficient of determination $\mathrm{CoD}(\varphi_B, K_B) = 1 - \mathrm{MSE}/\mathrm{Var}(\mu^A)$ across a $35 \times 35$ grid ($T = 3{,}000$ per simulation), with observer $B$ performing VFE-based sophisticated inference over agent $A$'s belief dynamics. Unlike $R^2 = \mathrm{corr}^2$ (which is scale-invariant and fails to penalize gain mismatch), the CoD properly penalizes bias and scale errors---exactly the pathology that arises when $K_B \neq K_A$. The white contour at $\mathrm{CoD} = r_s = 0.5$ defines the horizon surface $\mathcal{H}(A)$ (eq.~\ref{eq:horizon_model_space}). Panel~(a): at moderate coupling ($\beta = 1.5$, $\sigma_B = 0.5$), a majority of model space falls below the readability threshold---observers whose generative model of the agent diverges from reality cannot extract belief information despite performing exact VFE minimization under their (wrong) model. Panel~(b): at strong coupling ($\beta = 3.0$), the dark region shrinks dramatically. The horizon \emph{contracts} as coupling increases: stronger externalization compensates for model mismatch, making the agent readable to a wider range of observers. The ``inferno'' colormap (black $\to$ red $\to$ yellow) deliberately evokes the visual metaphor: the horizon is a boundary between darkness and light in model space.
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.85\textwidth]{figures/multi_agent.pdf}
-    \caption{Observer's inferrable externalization under the screen (environment-mediated, blue dashed) and direct-access (red dotted) scenarios, as a function of environment noise $\sigma_e$. Direct access maintains high externalization regardless of environment noise. The gray region marks the dark regime below $r_s = 0.5$ nats.}
-    \label{fig:multi_agent}
+    \includegraphics[width=\textwidth]{figures/fig2_horizon_heatmap.pdf}
+    \caption{The externalization horizon in model space. Heatmap: $\mathrm{CoD}(\varphi_B, K_B) = 1 - \mathrm{MSE}/\mathrm{Var}(\mu^A)$, where observer $B$ minimizes VFE over a generative model of $A$'s belief dynamics. Unlike $R^2 = \mathrm{corr}^2$, the CoD penalizes scale and bias errors from gain mismatch ($K_B \neq K_A$). White contour: $\mathrm{CoD} = r_s$ (the horizon). White ``+'': matched model $\boldsymbol{\theta}_A$. (a)~Moderate coupling ($\beta = 1.5$): large dark region where ToM fails. (b)~Strong coupling ($\beta = 3.0$): horizon shrinks as externalization increases.}
+    \label{fig:horizon}
+\end{figure}
+
+\subsection{Observer-Dependent Theory of Mind}
+
+Figure~\ref{fig:observer_dep} validates the key conceptual claim: the same agent can be transparent to one observer and dark to another. Agent~$A$ has fixed parameters $(\varphi = 0.7, K = 1.0)$. Observer~$B_1$ is well-calibrated ($\varphi_{B_1} = 0.7$, $K_{B_1} = 1.0$); observer~$B_2$ is strongly miscalibrated ($\varphi_{B_2} = 0.95$, $K_{B_2} = 0.1$)---expecting a slow, weakly-coupled agent. Both perform VFE minimization over their respective generative models of $A$. Panel~(a): a 200-step time series showing $\mu^A$ (black), $m^{B_1}$ (teal, tracks closely), and $m^{B_2}$ (coral, fails to track). Panel~(b): $R^2$ vs coupling strength $\beta$ for both observers. $B_1$ crosses the readability threshold at lower coupling than $B_2$---the gap between the two curves is the \emph{observer-dependent component} of the horizon, determined entirely by model similarity. Panel~(c): the mechanism underlying the difference. $B_1$'s posterior uncertainty $P_B$ drops well below its prior $P_{\text{prior}}$---observations are informative, VFE minimization succeeds in reducing uncertainty. $B_2$'s posterior remains near the prior---observations are uninformative under the wrong model, and VFE minimization yields no epistemic gain. This is the active inference explanation for why model mismatch produces opacity: when the generative model is wrong, the agent's VFE-optimal inference converges to a systematically biased estimate.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{figures/fig3_observer_dependent.pdf}
+    \caption{Observer-dependent Theory of Mind under active inference. (a)~$B_1$ (teal, matched) tracks $\mu^A$ (black); $B_2$ (coral, $K_B\!=\!0.1$, $\varphi_B\!=\!0.95$) does not. (b)~$R^2$ vs coupling $\beta$: $B_1$ crosses threshold at lower coupling. (c)~$P_B/P_{\text{prior}}$: $B_1$'s VFE minimization reduces uncertainty; $B_2$'s does not (posterior $\approx$ prior). Parameters: $\beta = 2.0$, $\sigma_B = 0.5$.}
+    \label{fig:observer_dep}
+\end{figure}
+
+\subsection{Dynamic Opacity}
+
+Figure~\ref{fig:dynamic} shows what happens when agent~$A$ changes its internal parameters during deployment---a scenario relevant to AGI systems that update their policies online. Agent~$A$'s policy gain $K$ transitions from $1.0$ to $0.3$ and persistence $\varphi$ from $0.7$ to $0.4$ via a sigmoid schedule at $t = T/2$. Observer~$B$ starts with a matched generative model ($\varphi_B = 0.7$, $K_B = 1.0$) and performs VFE minimization throughout, but does not update its model parameters. Panel~(a): $A$'s time-varying parameters (solid) vs $B$'s fixed assumptions (dashed). Panel~(b): Sliding-window $R^2$ drops from the readable regime to the dark regime, crossing the horizon after the parameter change. Panel~(c): The gap between actual MSE and $B$'s reported posterior variance $P^B$ reveals the most concerning consequence: $B$'s VFE-based inference produces \emph{confident but wrong} estimates. The posterior $P^B$ does not increase to reflect the model's degradation, because the Kalman filter's uncertainty estimate is calibrated to the (now incorrect) generative model, not to the actual prediction error. This demonstrates that an observer performing exact VFE minimization under a stale model can be systematically deceived---not by the agent's intention, but by the structural mismatch between model and reality.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=\textwidth]{figures/fig4_dynamic_opacity.pdf}
+    \caption{Dynamic opacity: generative model staleness breaks VFE-based ToM. (a)~Agent $A$ changes $K$ and $\varphi$ at $t = T/2$; observer $B$ stays fixed. (b)~$R^2$ crosses the horizon: readable $\to$ dark. (c)~Actual MSE (coral) diverges from reported $P_B$ (teal)---$B$'s VFE minimization produces confident but wrong estimates (shaded gap).}
+    \label{fig:dynamic}
 \end{figure}
 
 %% ============================================================
@@ -401,9 +490,13 @@ Figure~\ref{fig:multi_agent} compares the screen and direct-access scenarios. In
 \label{sec:discussion}
 %% ============================================================
 
-\subsection{Implications for AGI Interpretability}
+\subsection{Interpretability as a Relation}
 
-The externalization horizon provides a principled framework for understanding when an AI system's internal states are interpretable. Current approaches to interpretability focus on architectural transparency (attention visualization) or post-hoc explanation (SHAP values). Our framework asks a more fundamental question: does the system's architecture and coupling to the world permit externalization at all? An AGI system operating below the externalization horizon would be fundamentally opaque---not because we lack the right tools, but because its internal states are causally disconnected from observable behavior. This has direct implications for AI safety: alignment verification requires that the agent's goals and beliefs be externalized in principle.
+The externalization horizon reframes AGI interpretability as fundamentally \emph{relational}. Current approaches focus on properties of the system: architectural transparency (attention visualization), post-hoc explanation (SHAP values), or mechanistic interpretability (circuit analysis). Our framework asks a different question: interpretable \emph{to whom}? An AGI system operating below the externalization horizon is dark not because we lack tools, but because the observer's model of the system is insufficiently accurate. This has direct implications for AI safety: alignment verification requires not only that the agent externalize its goals, but that the auditor have an adequate model of \emph{how} the agent maps beliefs to actions. A well-calibrated auditor (small $|\boldsymbol{\delta}|$) can verify alignment at lower coupling strength than a poorly calibrated one.
+
+\subsection{Innovation Consistency as a Diagnostic}
+
+Our results reveal that standard metrics like squared correlation ($R^2 = \mathrm{corr}^2$) can be misleading for assessing model quality. Because $R^2$ is scale-invariant, an observer with a severely mismatched gain $K_B$ can produce estimates that correlate with $\mu^A$ (since the Kalman filter's observation update partially compensates) yet are systematically biased and mis-scaled---yielding high $R^2$ but near-zero or negative CoD. This motivates our use of the coefficient of determination ($\mathrm{CoD} = 1 - \mathrm{MSE}/\mathrm{Var}$) for the horizon heatmaps (Figure~\ref{fig:horizon}). More broadly, the Kalman filter's observation update can mask transition model errors, maintaining reasonable correlation even when the observer's generative model is structurally wrong. The innovation consistency ratio ($\mathrm{ICR} = \mathrm{Var}(\text{innov})/S$) provides a complementary diagnostic that detects misspecification invisible to correlation. Figure~\ref{fig:dynamic}(c) illustrates a related pathology: the observer's posterior uncertainty $P^B$ remains flat even as actual prediction error spikes, because the uncertainty estimate is calibrated to the (incorrect) model rather than to reality. This suggests a practical protocol for AGI monitoring: track not only whether your model of the system correlates with its behavior, but whether your model's \emph{predictions} are calibrated---innovations should be white noise with variance matching the predicted innovation variance.
 
 \subsection{Connection to Empowerment and Agency}
 
@@ -411,7 +504,11 @@ Our controllability measure $\mathcal{R}_a$ is closely related to empowerment \c
 
 \subsection{The Robot as Stranger}
 
-Our framework formalizes a concern raised in recent discussions of synthetic neurophenomenology \cite{monnier2025generative}: the robot is fundamentally a ``stranger.'' In human-human interaction, both agents have rich interoceptive feedback that enables mutual incorporation---the felt sense of sharing an experiential space. A robot, with limited sensors and actuators, may have a well-defined Markov blanket but an externalization horizon that is far smaller than a human's. The mutual externalization $\mathcal{M}(A, B)$ quantifies this asymmetry. Even if the human fully externalizes to the robot, the robot's externalization may be below threshold---the human cannot read the robot's ``intentions'' because there is insufficient causal coupling from beliefs to observable behavior.
+Our framework formalizes a concern raised in recent discussions of synthetic neurophenomenology \cite{monnier2025generative}: the robot is fundamentally a ``stranger.'' In the model-similarity framework, this opacity has a precise source: the human's generative model of the robot's dynamics---$(\varphi_B, v_B, K_B)$---is likely far from the robot's actual parameters. The robot may heavily externalize ($\mathcal{E}$ well above threshold), yet remain unreadable because the human's model of \emph{how} the robot maps beliefs to actions is wrong. The mutual readability $\mathcal{M}(A, B)$ (eq.~\ref{eq:mutual_readability}) quantifies this: even if both agents externalize strongly, mutual comprehension requires that each has an adequate model of the other. Figure~\ref{fig:observer_dep} illustrates this directly: the same agent is transparent to $B_1$ and dark to $B_2$.
+
+\subsection{Dynamic Opacity and Model Staleness}
+
+Figure~\ref{fig:dynamic} demonstrates a scenario particularly relevant to deployed AGI: an agent that changes its internal parameters---through online learning, policy updates, or environmental adaptation---becomes progressively opaque to an observer calibrated on pre-change behavior. The miscalibration gap (actual MSE vs reported $P^B$) is especially concerning: the observer's \emph{confidence} in its model of the agent does not degrade, even as the model's accuracy collapses. This suggests that monitoring systems for AGI should track not only model fit but model \emph{freshness}---the time since the observer's model was last validated against the agent's actual dynamics.
 
 \subsection{Connection to Phenomenological Privacy}
 
@@ -419,16 +516,16 @@ If some internal states are \emph{in principle} beyond the externalization horiz
 
 \subsection{Limitations and Future Work}
 
-Our analysis is limited to linear-Gaussian systems where closed-form results are available. Key extensions include: (i)~\textbf{nonlinear systems} with state-dependent horizons, where the 2026 differential flatness framework for active inference \cite{friston2026flatness} may provide analytical handles; (ii)~\textbf{hierarchical models} where different levels of a deep temporal model may have different externalization radii; (iii)~\textbf{active externalization}---agents that \emph{choose} to externalize or conceal their internal states, connecting to communication, deception, and signaling \cite{albarracin2026empathy}; (iv)~\textbf{empirical validation} in embodied robotic systems and human-robot interaction; and (v)~\textbf{information-geometric structure}---exploring whether the horizon admits a geometric interpretation where the ``curvature'' of information space determines the horizon radius, building on the information geometry of Markov blankets \cite{parr2020information}.
+Our analysis is limited to linear-Gaussian systems where closed-form results are available. Key extensions include: (i)~\textbf{nonlinear systems} with state-dependent horizons, where the 2026 differential flatness framework for active inference \cite{friston2026flatness} may provide analytical handles; (ii)~\textbf{hierarchical models} where different levels of a deep temporal model may have different externalization radii; (iii)~\textbf{active deception}---an agent that deliberately selects dynamics to maximize $|\boldsymbol{\delta}|$ for specific observers, formalizing strategic opacity; (iv)~\textbf{empirical validation} in embodied robotic systems; and (v)~\textbf{model learning}---extending the framework to observers that update $\boldsymbol{\theta}_B$ online, creating an arms race between agent adaptation and observer calibration.
 
 %% ============================================================
 \section{Conclusion}
 \label{sec:conclusion}
 %% ============================================================
 
-We have introduced the externalization horizon: an information-theoretic boundary that determines when an active inference agent's internal states can be externalized to, or inferred from, the observable world. Unlike the Markov blanket, which provides a structural partition, the externalization horizon is a continuous, parameter-dependent measure that admits phase transitions. We derived closed-form expressions for a linear-Gaussian agent, identified critical thresholds where externalization collapses, and extended the framework to multi-agent settings with two observation regimes.
+We have introduced the externalization horizon: an information-theoretic boundary that determines when an active inference agent's internal states can be inferred by an external observer. Our key insight is that this boundary is \textbf{observer-dependent}: readability emerges from the similarity between the observer's generative model and the agent's actual dynamics, not from a property of the agent alone. We showed that (i)~policy gain mismatch dominates readability degradation through the observation model; (ii)~innovation consistency detects model misspecification invisible to correlation; and (iii)~dynamic parameter changes, feedback coupling, and observer calibration all reshape the horizon in parameter space.
 
-The externalization horizon provides a unified language for questions spanning AGI interpretability (when can we read an AI's goals?), multi-agent coordination (when can agents model each other?), and the philosophy of mind (what is the boundary between communicable and private cognitive states?). By moving beyond the binary question of ``does a boundary exist?'' to the quantitative question of ``how permeable is the boundary?,'' we open new avenues for understanding the conditions under which minds---biological or artificial---become mutually intelligible.
+The externalization horizon provides a unified language for questions spanning AGI interpretability (when can we read an AI's goals---and \emph{who} can read them?), multi-agent coordination (when can agents model each other?), and the philosophy of mind (what is the boundary between communicable and private cognitive states?). By moving beyond the binary question of ``does a boundary exist?'' to the relational question of ``who can see through the boundary, and how does that depend on their model of the agent?,'' we open new avenues for understanding the conditions under which minds---biological or artificial---become mutually intelligible.
 
 %% ============================================================
 % Bibliography
