@@ -499,14 +499,14 @@ def fig2_horizon_heatmap():
     phi_B_vals = np.linspace(0.1, 0.95, n_grid)
     K_B_vals = np.linspace(0.05, 2.5, n_grid)
 
-    # Panel (a): weak coupling — most of model space is dark
-    # Panel (b): strong coupling — readable region expands around theta_A
+    # 3-panel progression: dark → horizon emerges → readable
     configs = [
-        (1.5, r"(a) Moderate coupling ($\beta = 1.5$)"),
-        (3.0, r"(b) Strong coupling ($\beta = 3.0$)"),
+        (0.7, r"(a) Weak coupling ($\beta = 0.7$)"),
+        (1.5, r"(b) Moderate coupling ($\beta = 1.5$)"),
+        (3.0, r"(c) Strong coupling ($\beta = 3.0$)"),
     ]
 
-    fig, axes = plt.subplots(1, 2, figsize=(14, 5.5))
+    fig, axes = plt.subplots(1, 3, figsize=(18, 5.5))
 
     for ax_idx, (beta_val, title) in enumerate(configs):
         print(f"  Computing panel {ax_idx+1} (beta={beta_val})...")
@@ -519,17 +519,22 @@ def fig2_horizon_heatmap():
         im = ax.pcolormesh(PHI_B, K_B_GRID, surface, cmap="inferno",
                            shading="auto", vmin=0, vmax=1)
         plt.colorbar(im, ax=ax, shrink=0.85,
-                     label=r"ToM quality: $1 - \mathrm{MSE}/\mathrm{Var}(\mu^A)$")
+                     label=r"CoD: $1 - \mathrm{MSE}/\mathrm{Var}(\mu^A)$")
 
-        # Horizon contour
-        cs = ax.contour(PHI_B, K_B_GRID, surface, levels=[r_s_thresh],
-                        colors="white", linewidths=2.5)
-        if len(cs.allsegs[0]) > 0:
-            ax.clabel(cs, fmt=r"$r_s$", fontsize=10, colors="white")
+        # Horizon contour (only if it exists in the surface)
+        if surface.max() >= r_s_thresh:
+            cs = ax.contour(PHI_B, K_B_GRID, surface, levels=[r_s_thresh],
+                            colors="white", linewidths=2.5)
+            if len(cs.allsegs[0]) > 0:
+                ax.clabel(cs, fmt=r"$r_s$", fontsize=10, colors="white")
 
         # Additional contours for structure
-        ax.contour(PHI_B, K_B_GRID, surface, levels=[0.2, 0.4, 0.6, 0.8],
-                   colors="white", linewidths=0.5, linestyles="--", alpha=0.3)
+        visible_levels = [l for l in [0.2, 0.4, 0.6, 0.8]
+                          if l < surface.max()]
+        if visible_levels:
+            ax.contour(PHI_B, K_B_GRID, surface, levels=visible_levels,
+                       colors="white", linewidths=0.5, linestyles="--",
+                       alpha=0.3)
 
         # Mark true parameters
         ax.plot(phi_A, K_A, "+", color="white", ms=18, mew=3, zorder=10)
@@ -538,14 +543,18 @@ def fig2_horizon_heatmap():
 
         # Region labels
         dark_frac = np.mean(surface < r_s_thresh)
-        if dark_frac > 0.15:
-            # Find center of dark region for label
-            ax.text(0.2, 0.2, "DARK", color="white", fontsize=16,
-                    fontweight="bold", alpha=0.8, ha="center")
-        if dark_frac < 0.95:
-            # Label readable region near theta_A
-            ax.text(phi_A, K_A + 0.5, "READABLE", color="black",
-                    fontsize=12, fontweight="bold", alpha=0.7, ha="center")
+        if dark_frac > 0.95:
+            ax.text(0.5, 1.25, "ALL DARK", color="white", fontsize=16,
+                    fontweight="bold", alpha=0.8, ha="center",
+                    transform=ax.transData)
+        else:
+            if dark_frac > 0.15:
+                ax.text(0.2, 0.2, "DARK", color="white", fontsize=14,
+                        fontweight="bold", alpha=0.8, ha="center")
+            if dark_frac < 0.95:
+                ax.text(phi_A, K_A + 0.5, "READABLE", color="black",
+                        fontsize=11, fontweight="bold", alpha=0.7,
+                        ha="center")
 
         ax.set_xlabel(r"Observer's assumed $\varphi_B$", fontsize=12)
         ax.set_ylabel(r"Observer's assumed $K_B$", fontsize=12)
