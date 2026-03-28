@@ -544,7 +544,7 @@ def fig2_horizon_heatmap():
         # Region labels
         dark_frac = np.mean(surface < r_s_thresh)
         if dark_frac > 0.95:
-            ax.text(0.5, 1.25, "ALL DARK", color="white", fontsize=16,
+            ax.text(0.5, 1.25, "UNREADABLE", color="white", fontsize=16,
                     fontweight="bold", alpha=0.8, ha="center",
                     transform=ax.transData)
         else:
