@@ -1,0 +1,580 @@
+\documentclass[runningheads]{llncs}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage[hidelinks]{hyperref}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning}
+
+\begin{document}
+
+\title{The Externalization Horizon: An Information-Theoretic Boundary \\
+for Internal States in Active Inference Systems}
+
+\author{Mahault Albarracin\inst{1,2} \and Alejandro Jimenez Rodriguez\inst{3}}
+
+\authorrunning{M. Albarracin, A. Jimenez Rodriguez}
+
+\institute{
+VERSES AI, Los Angeles, USA \\
+\and
+Universit\'{e} du Qu\'{e}bec \`{a} Montr\'{e}al, Canada \\
+\email{mahault.albarracin@gmail.com}
+\and
+Sheffield Hallam University, Sheffield, United Kingdom \\
+\email{a.jimenez@shu.ac.uk}
+}
+
+\maketitle
+
+\begin{abstract}
+Active inference agents maintain internal belief states that drive action selection through Expected Free Energy minimization. A fundamental question for artificial general intelligence is: \emph{when can these internal states be inferred or influenced by external observers?} We introduce the \textbf{externalization horizon}, an information-theoretic quantity that measures the effective coupling between an agent's internal states and the observable environment. Unlike the Markov blanket---which provides a binary, structural partition---the externalization horizon is a continuous, parameter-dependent measure that admits phase transitions. We derive closed-form expressions for a linear-Gaussian active inference agent coupled to a stochastic environment, defining two complementary quantities: \emph{controllability} $\mathcal{R}_a$ (how much internal states influence the world) and \emph{observability} $\mathcal{R}_o$ (how much internal states can be inferred from observations). We show that a critical threshold $r_s$ exists---analogous to a Schwarzschild radius---below which internal states become effectively ``dark'': neither externalizable nor observable. We extend the framework to multi-agent settings with and without Theory of Mind, and validate our analytical results with simulations demonstrating the horizon's dependence on noise, coupling strength, and policy precision. We discuss implications for AGI interpretability, multi-agent coordination, and the relationship between communicable and private cognitive states.
+\end{abstract}
+
+\keywords{Active Inference \and Markov Blankets \and Information Theory \and Empowerment \and Theory of Mind \and Interpretability}
+
+%% ============================================================
+\section{Introduction}
+\label{sec:intro}
+%% ============================================================
+
+A central challenge in artificial general intelligence concerns the relationship between an agent's internal cognitive states and its observable behavior. When can an external observer infer what an agent ``thinks''? When does an agent's internal model causally shape its environment? And under what conditions do internal states become effectively \emph{private}---causally disconnected from the observable world?
+
+The Free Energy Principle (FEP) \cite{friston2006free,friston2010free} provides a principled framework for understanding agents as inference machines that maintain generative models of their environment. Under active inference \cite{parr2022active}, agents act to minimize Expected Free Energy (EFE), simultaneously reducing uncertainty about hidden states and fulfilling prior preferences \cite{parr2019generalized}. The Markov blanket \cite{pearl1988probabilistic,friston2013life} formalizes the boundary between agent and environment: internal states are conditionally independent of external states given the blanket (sensory and active states). This partition has been extended to hierarchical biological organization \cite{kirchhoff2018markov} and more recently to a physics of beliefs through Bayesian mechanics \cite{ramstead2023bayesian}.
+
+However, the Markov blanket is a \emph{structural} property of a graphical model. It tells us that a boundary \emph{exists}, but not how much information actually flows through it. As Bruineberg et al.~\cite{bruineberg2022emperor} demonstrated in their influential critique, there is a persistent equivocation in the literature between ``Pearl blankets'' (epistemic tools for conditional independence) and ``Friston blankets'' (claimed physical boundaries of self-organizing systems). Raja et al.~\cite{raja2021free} further argued that the FEP presupposes rather than explains the agent-environment boundary. More technically, Biehl et al.~\cite{biehl2021technical} showed that various definitions of Markov blankets in FEP papers are not equivalent, and Aguilera et al.~\cite{aguilera2022particular} demonstrated that Markov blanket conditions hold only in a very narrow parameter space for linear stochastic systems, failing in the nonequilibrium regimes where living systems actually operate \cite{aguilera2023knitting}.
+
+A door may exist between two rooms; the Markov blanket tells us the door is there, but not whether it is open, ajar, or sealed shut. Two agents may share identical graphical structure yet differ radically in how much their internal states influence---or are readable from---the environment, depending on noise levels, coupling strengths, and policy precision.
+
+We propose the \textbf{externalization horizon}: a continuous, parameter-dependent, information-theoretic measure of the effective permeability of an agent's boundary. Our contributions are:
+
+\begin{enumerate}
+    \item We derive closed-form expressions for the \emph{externalization} of internal states in a linear-Gaussian active inference agent, decomposed into \textbf{controllability} (internal $\to$ environment) and \textbf{observability} (internal $\to$ observer inference).
+    \item We identify a \textbf{critical threshold} $r_s$ below which internal states are effectively ``dark''---an information-theoretic analogue of the Schwarzschild radius. This threshold depends on the signal-to-noise ratio of the agent-environment coupling.
+    \item We extend the framework to \textbf{multi-agent systems}, distinguishing between environment-mediated inference (the ``screen'' scenario) and direct behavioral observation, connecting to Theory of Mind.
+    \item We validate these results through \textbf{simulations} that demonstrate phase transitions in externalization as a function of coupling strength, noise, and policy gain.
+\end{enumerate}
+
+The externalization horizon provides a principled answer to questions that the Markov blanket framework alone cannot address: When is an AI system interpretable? When can agents model each other? What is the boundary between communicable and private cognitive states?
+
+%% ============================================================
+\section{Related Work}
+\label{sec:related}
+%% ============================================================
+
+\paragraph{The Free Energy Principle and Markov Blankets.}
+The FEP posits that self-organizing systems minimize variational free energy, maintaining themselves within expected states through perception and action \cite{friston2006free,friston2010free}. The Markov blanket formalism \cite{pearl1988probabilistic,friston2013life,kirchhoff2018markov} partitions system states into internal, external, sensory, and active states, providing a formal boundary for self-organization. Parr et al.~\cite{parr2020information} connected Markov blankets to information geometry and stochastic thermodynamics, showing that the blanket partition induces a dual information geometry. However, multiple critiques have demonstrated that the blanket's existence is a \emph{necessary but not sufficient} condition for cognitive agency \cite{bruineberg2022emperor,raja2021free,biehl2021technical,aguilera2022particular}. Most relevantly, Possati~\cite{possati2025density} recently proposed \emph{Markov blanket density}---a continuous scalar field $\rho \in [0,1]$ quantifying the \emph{degree} of conditional independence at each point---as a graded generalization of the binary blanket. Similarly, Sakthivadivel~\cite{sakthivadivel2022weak} introduced ``weak'' Markov blankets as an approximate, graded version. Our externalization horizon complements these efforts by quantifying information flow \emph{through} the blanket rather than the blanket's structural strength.
+
+\paragraph{Empowerment and Intrinsic Motivation.}
+Empowerment \cite{klyubin2005empowerment,salge2014empowerment} quantifies the channel capacity from an agent's actions to its future sensory states: $\mathfrak{E} = \max_{p(a)} I(a_t; s_{t+1})$. Kiefer~\cite{kiefer2025empowerment} recently proved that the generalized free energy used in active inference is equivalent to empowerment constrained by risk, unifying active inference, empowerment, and causal path entropy as variations on constrained maximum entropy inference. Our controllability measure $\mathcal{R}_a$ is closely related but richer: it measures information flow from \emph{beliefs} (not just actions) to the \emph{environment} (not just the agent's own sensors). Empowerment is a \emph{capacity} (optimized over action distributions); externalization is a \emph{rate} (under the actual policy). An agent may have high empowerment but low externalization if its policy does not exploit its action capacity.
+
+\paragraph{Transfer Entropy and Causal Influence.}
+Transfer entropy \cite{schreiber2000measuring} measures directed information flow between time series: $T_{X \to Y} = I(Y_{t+1}; X_t | Y_t)$. For Gaussian variables, transfer entropy is equivalent to Granger causality \cite{barnett2009granger}. Our externalization measure $I(\mu_t; e_{t+1} | e_t)$ is structurally identical to transfer entropy from beliefs to environment. Importantly, Ay and Polani~\cite{ay2008information} showed that information flow defined via interventional distributions (do-calculus) is not the same as statistical association---transfer entropy can vanish even when causal influence exists. Kolchinsky and Wolpert~\cite{kolchinsky2018semantic} defined \emph{semantic information} as the syntactic information causally necessary for a system to maintain its own existence, introducing a \emph{viability threshold} below which the agent cannot sustain itself---the closest existing formalism to our externalization horizon. Lizier et al.~\cite{lizier2008phase} demonstrated that transfer entropy peaks at phase transitions in random Boolean networks, showing that information transfer is maximized at the edge of chaos. We go beyond measuring information flow to identifying the critical threshold where this flow collapses, providing a named boundary concept.
+
+\paragraph{Theory of Mind and Multi-Agent Inference.}
+Theory of Mind (ToM) in artificial agents has been formalized through inverse planning \cite{baker2017rational}, meta-learning \cite{rabinowitz2018machine}, and active inference approaches to social cognition \cite{friston2015duet,veissiere2020thinking,vasil2020communication}. Friston and Frith~\cite{friston2015duet} showed that communication between agents can be modeled as coupled inference, where each agent inverts a generative model of the other's behavior. Maisto et al.~\cite{maisto2023interactive} operationalized this as ``interactive inference,'' where agents simultaneously minimize their own free energy and select actions that make their intentions \emph{legible} to others. Albarracin et al.~\cite{albarracin2024protentions} formalized shared anticipatory structures in multi-agent active inference using category theory, while Albarracin et al.~\cite{albarracin2026empathy} demonstrated that empathic perspective-taking through self-other model transformation induces robust cooperation in iterated games without explicit communication. Our framework provides a \emph{necessary condition} for all such social inference: an observer can only model another agent's internal states if those states are sufficiently externalized---if the agent's externalization exceeds the observer's inference threshold.
+
+\paragraph{Neurophenomenology and the Privacy of Experience.}
+Generative neurophenomenology \cite{monnier2025generative} extends Varela's program \cite{varela1996neurophenomenology} to interpersonal settings, proposing that shared experience emerges through ``mutual incorporation'' in an ``interbeing space.'' Ramstead et al.~\cite{ramstead2022generative} formalized ``generative passages'' connecting phenomenological descriptions to neural mechanisms through the mathematical structure of generative models, while Sandved-Smith et al.~\cite{sandvedsmith2025deep} applied deep computational neurophenomenology to investigate the ``how'' of experience. Our framework formalizes the complementary question: when does mutual incorporation fail---when do two agents remain strangers despite interaction?
+
+%% ============================================================
+\section{Mathematical Framework}
+\label{sec:math}
+%% ============================================================
+
+We begin with a minimal model that admits closed-form analysis, then generalize.
+
+\subsection{A Simple Active Inference Agent}
+
+Consider an agent with scalar internal state $x_t \in \mathbb{R}$, evolving as:
+\begin{equation}
+    x_{t+1} = x_t + v + \omega_t, \quad \omega_t \sim \mathcal{N}(0, \sigma_x^2)
+    \label{eq:state_dynamics}
+\end{equation}
+where $v$ is a drift term and $\omega_t$ is process noise. The agent receives noisy observations:
+\begin{equation}
+    o_t = x_t + \xi_t, \quad \xi_t \sim \mathcal{N}(0, \sigma_o^2)
+    \label{eq:observations}
+\end{equation}
+
+Under a Kalman filter---the optimal Bayesian estimator for this linear-Gaussian system, which can be derived as gradient descent on variational free energy in generalized coordinates \cite{friston2008variational,baltieri2020kalman}---the agent maintains a belief $\mu_t = \mathbb{E}[x_t \mid o_{1:t}]$ that evolves as:
+\begin{equation}
+    \mu_{t+1} = \mu_t + v + K_f(o_{t+1} - \mu_t - v)
+    \label{eq:belief_update}
+\end{equation}
+where $K_f$ is the steady-state Kalman gain. The agent selects actions through a linear policy:
+\begin{equation}
+    a_t = K \mu_t
+    \label{eq:policy}
+\end{equation}
+where $K$ is the policy gain, mapping beliefs to actions. This linear policy structure emerges from EFE minimization in the linear-Gaussian case, which reduces to KL control---the risk term dominates since the epistemic (ambiguity) term becomes constant with respect to additive control inputs \cite{koudahl2021efe,baltieri2020kalman}. The resulting optimal policy is a linear feedback law identical in form to LQR, where the precision of the preferred distribution encodes the cost on state deviations.
+
+\subsection{Agent-Environment Coupling}
+
+The crucial step is to model an \emph{environment} that is influenced by the agent's actions. Let the environment state $e_t \in \mathbb{R}$ evolve as:
+\begin{equation}
+    e_{t+1} = \rho \, e_t + \beta \, a_t + \varepsilon_t, \quad \varepsilon_t \sim \mathcal{N}(0, \sigma_e^2)
+    \label{eq:environment}
+\end{equation}
+where $\rho \in [0,1)$ is the autoregressive persistence of the environment, $\beta$ is the coupling strength from agent actions to environment, and $\varepsilon_t$ is environment noise. Substituting the policy (\ref{eq:policy}):
+\begin{equation}
+    e_{t+1} = \rho \, e_t + \underbrace{\beta K}_{\text{effective coupling}} \mu_t + \varepsilon_t
+    \label{eq:env_with_beliefs}
+\end{equation}
+
+This is the key equation: the agent's \emph{internal belief} $\mu_t$ now appears directly in the environment dynamics. The product $\beta K$ determines the effective coupling---how strongly the agent's model of the world actually shapes the world.
+
+\subsection{The Externalization Measure}
+
+We define the \textbf{externalization} of the agent's internal state as the transfer entropy from beliefs to environment:
+\begin{equation}
+    \mathcal{E}(\mu \to e) \triangleq I(\mu_t; \, e_{t+1} \mid e_t)
+    \label{eq:externalization}
+\end{equation}
+
+This measures how much additional information the agent's belief provides about the next environment state, beyond what the current environment state already provides. In the linear-Gaussian case, we can compute this in closed form.
+
+\begin{proposition}[Closed-Form Externalization]
+\label{prop:closed_form}
+For the linear-Gaussian system defined by (\ref{eq:state_dynamics})--(\ref{eq:environment}), the externalization is:
+\begin{equation}
+    \mathcal{E}(\mu \to e) = \frac{1}{2} \log \left( 1 + \frac{\beta^2 K^2 \, \mathrm{Var}(\mu_t \mid e_t)}{\sigma_e^2} \right)
+    \label{eq:externalization_closed}
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+Conditioned on $e_t$, the next environment state is $e_{t+1} = \rho \, e_t + \beta K \mu_t + \varepsilon_t$. Since $\rho \, e_t$ is deterministic given $e_t$, the residual innovation is $\tilde{e}_{t+1} = \beta K \mu_t + \varepsilon_t$. The conditional mutual information between $\mu_t$ and $\tilde{e}_{t+1}$ (given $e_t$) follows the standard Gaussian channel formula \cite{cover2006elements}:
+\[
+I(\mu_t; \tilde{e}_{t+1} \mid e_t) = \frac{1}{2} \log \left( 1 + \frac{(\beta K)^2 \, \mathrm{Var}(\mu_t \mid e_t)}{\sigma_e^2} \right)
+\]
+where $\mathrm{Var}(\mu_t \mid e_t)$ is the conditional variance of the belief given the environment state. Since the transformation from $(\mu_t, \varepsilon_t)$ to $(e_{t+1})$ is affine given $e_t$, we have $I(\mu_t; e_{t+1} \mid e_t) = I(\mu_t; \tilde{e}_{t+1} \mid e_t)$.
+\end{proof}
+
+The externalization depends on three factors:
+\begin{itemize}
+    \item \textbf{Effective coupling} $\beta K$: the product of environment susceptibility and policy gain.
+    \item \textbf{Belief variability} $\mathrm{Var}(\mu_t \mid e_t)$: how much the belief varies independently of the environment.
+    \item \textbf{Environment noise} $\sigma_e^2$: how much the environment is driven by its own stochasticity.
+\end{itemize}
+
+%% ============================================================
+\section{The Externalization Horizon}
+\label{sec:horizon}
+%% ============================================================
+
+\subsection{Controllability and Observability}
+
+We now generalize beyond instantaneous externalization to define two complementary infinite-horizon measures, following the intuition from control theory \cite{baltieri2020bayesian}.
+
+\begin{definition}[Controllability]
+The \textbf{controllability radius} of an internal state $s_t$ is:
+\begin{equation}
+    \mathcal{R}_a(s_t) = I(s_t; \, Y_{t+1:\infty})
+    \label{eq:controllability}
+\end{equation}
+where $Y_{t+1:\infty}$ denotes the future trajectory of the environment. This measures how much the current internal state causally influences all future environment states.
+\end{definition}
+
+\begin{definition}[Observability]
+The \textbf{observability radius} of an internal state $s_t$ is:
+\begin{equation}
+    \mathcal{R}_o(s_t) = I(s_t; \, O^B_{t+1:\infty})
+    \label{eq:observability}
+\end{equation}
+where $O^B_{t+1:\infty}$ denotes the future observations available to an external observer $B$. This measures how much an observer could, in principle, infer about the agent's internal state.
+\end{definition}
+
+In general, observability is bounded by controllability:
+\begin{equation}
+    \mathcal{R}_o(s_t) \leq \mathcal{R}_a(s_t)
+    \label{eq:obs_leq_ctrl}
+\end{equation}
+since an observer can only infer internal states through their causal traces in the environment (a consequence of the data processing inequality \cite{cover2006elements}). Equality holds when the observer has noiseless access to all environment states influenced by the agent.
+
+\subsection{The Critical Threshold}
+
+\begin{definition}[Externalization Horizon]
+An internal state $s_t$ is \textbf{beyond the externalization horizon} if its controllability falls below a critical threshold $r_s$:
+\begin{equation}
+    \mathcal{R}_a(s_t) < r_s
+    \label{eq:horizon_condition}
+\end{equation}
+where $r_s$ is the minimum information rate required for the state to have a detectable causal footprint in the environment.
+\end{definition}
+
+For the linear-Gaussian model, we can compute $\mathcal{R}_a$ in closed form. Since the environment is an AR(1) process driven by the agent's beliefs, the total future influence decays geometrically:
+
+\begin{proposition}[Controllability Radius]
+\label{prop:controllability}
+For the linear-Gaussian system with $|\rho| < 1$:
+\begin{equation}
+    \mathcal{R}_a(s_t) = \frac{1}{2} \sum_{k=0}^{\infty} \log \left(1 + \frac{\rho^{2k} \beta^2 K^2 \, \mathrm{Var}(\mu_{t+k} \mid e_{t+k})}{\sigma_e^2} \right)
+    \label{eq:controllability_series}
+\end{equation}
+Under stationarity (constant $\mathrm{Var}(\mu \mid e) = \sigma_\mu^2$), this simplifies to:
+\begin{equation}
+    \mathcal{R}_a \approx \frac{1}{2(1-\rho^2)} \log \left( 1 + \frac{\beta^2 K^2 \sigma_\mu^2}{\sigma_e^2} \right)
+    \label{eq:controllability_approx}
+\end{equation}
+\end{proposition}
+
+The horizon condition $\mathcal{R}_a < r_s$ then yields:
+
+\begin{corollary}[Horizon Condition]
+Internal states fall beyond the externalization horizon when:
+\begin{equation}
+    \beta K < \frac{\sigma_e}{\sigma_\mu} \sqrt{e^{2 r_s (1-\rho^2)} - 1}
+    \label{eq:horizon_bk}
+\end{equation}
+\end{corollary}
+
+This reveals the \textbf{trivial horizons}:
+\begin{itemize}
+    \item $\beta K = 0$: The agent has no causal impact on the environment (zero coupling or zero policy gain). All internal states are dark.
+    \item $\sigma_e^2 \to \infty$: The environment is so noisy that any agent influence is drowned out.
+    \item $\sigma_\mu^2 \to 0$: The agent's beliefs carry no private information beyond what the environment already determines.
+\end{itemize}
+
+\subsection{Phase Transition}
+
+The externalization exhibits a sharp transition as a function of the effective signal-to-noise ratio $\text{SNR} = \beta^2 K^2 \sigma_\mu^2 / \sigma_e^2$:
+
+\begin{equation}
+    \mathcal{E} = \frac{1}{2} \log(1 + \text{SNR}) \approx
+    \begin{cases}
+        \frac{\text{SNR}}{2} & \text{if } \text{SNR} \ll 1 \quad \text{(dark regime)} \\
+        \frac{1}{2} \log(\text{SNR}) & \text{if } \text{SNR} \gg 1 \quad \text{(transparent regime)}
+    \end{cases}
+    \label{eq:phase_transition}
+\end{equation}
+
+In the dark regime, externalization grows linearly with coupling---small changes barely register. In the transparent regime, externalization grows logarithmically---the agent's internal states are already substantially readable, and further coupling yields diminishing returns. The transition between regimes occurs at $\text{SNR} \approx 1$, defining a natural critical point.
+
+%% ============================================================
+\section{Multi-Agent Extension}
+\label{sec:multi_agent}
+%% ============================================================
+
+We now extend the framework to consider an observer agent $B$ attempting to infer the internal states of agent $A$.
+
+\subsection{Two Observation Regimes}
+
+Following the standard active inference perception-action loop for agent $A$:
+\begin{equation}
+    \mu_t^A \to a_t^A \to o_{t+1}^A \to \mu_{t+1}^A
+    \label{eq:agent_loop}
+\end{equation}
+
+We distinguish two scenarios for observer $B$:
+
+\paragraph{Scenario (i): Environment Screen.}
+Observer $B$ only accesses the environment state, not agent $A$'s actions directly:
+\begin{equation}
+    \mu_t^A \to a_t^A \to \underbrace{e_{t+1}}_{\text{environment}} \to o_{t+1}^B
+    \label{eq:screen}
+\end{equation}
+The environment acts as a ``screen'' that mediates all information. By the data processing inequality, the observer's inference is strictly limited:
+\begin{equation}
+    I(\mu_t^A; \, o_{t+1}^B) \leq I(\mu_t^A; \, e_{t+1}) = \mathcal{E}(\mu^A \to e)
+    \label{eq:screen_bound}
+\end{equation}
+If the observer's own sensory noise is $\sigma_B^2$, the observable externalization is:
+\begin{equation}
+    \mathcal{E}_{\text{screen}} = \frac{1}{2} \log \left( 1 + \frac{\beta^2 K^2 \sigma_\mu^2}{\sigma_e^2 + \sigma_B^2} \right)
+    \label{eq:screen_externalization}
+\end{equation}
+
+\paragraph{Scenario (ii): Direct Behavioral Access.}
+Observer $B$ can directly observe agent $A$'s actions:
+\begin{equation}
+    \mu_t^A \to a_t^A \to o_{t+1}^B \to \hat{\mu}_{t+1}^A
+    \label{eq:direct}
+\end{equation}
+where $\hat{\mu}^A$ denotes $B$'s estimate of $A$'s beliefs. Since $a_t^A = K \mu_t^A + \eta_t$ (with action noise $\eta_t \sim \mathcal{N}(0, \sigma_\eta^2)$), the observable externalization is:
+\begin{equation}
+    \mathcal{E}_{\text{direct}} = \frac{1}{2} \log \left( 1 + \frac{K^2 \sigma_\mu^2}{\sigma_\eta^2} \right)
+    \label{eq:direct_externalization}
+\end{equation}
+This depends on $K$ (policy gain) but not $\beta$ (environment coupling)---the observer bypasses the environment channel. This scenario connects to the legibility literature in human-robot interaction \cite{dragan2013legibility,maisto2023interactive}: legible behavior corresponds to high $\mathcal{E}_{\text{direct}}$, achieved through large policy gain $K$ and low action noise $\sigma_\eta$.
+
+\subsection{Conditions for Theory of Mind}
+
+Theory of Mind---the ability of observer $B$ to maintain a model of agent $A$'s beliefs \cite{friston2015duet}---requires sufficient observable externalization:
+
+\begin{proposition}[ToM Feasibility]
+An observer $B$ can maintain a non-trivial model of agent $A$'s internal states only if:
+\begin{equation}
+    \mathcal{E}_{\text{obs}} > r_s^B
+    \label{eq:tom_condition}
+\end{equation}
+where $\mathcal{E}_{\text{obs}}$ is the externalization available to $B$ (via screen or direct access) and $r_s^B$ is $B$'s inference threshold (determined by $B$'s own sensory precision and model complexity).
+\end{proposition}
+
+This provides a necessary condition: \emph{you cannot model what you cannot observe}. An agent whose externalization falls below the observer's threshold is effectively a ``stranger''---the observer cannot distinguish its intentional behavior from noise. This connects to Veissi\`{e}re et al.'s observation that we think \emph{through} other minds \cite{veissiere2020thinking}: such thinking requires that the other mind be sufficiently externalized.
+
+\subsection{Shared Externalization and the Interbeing Space}
+
+When two agents mutually externalize---each influencing the environment that the other observes---a \emph{shared externalization space} emerges. Define the \textbf{mutual externalization}:
+\begin{equation}
+    \mathcal{M}(A, B) = \min\left(\mathcal{E}(A \to B), \, \mathcal{E}(B \to A)\right)
+    \label{eq:mutual_externalization}
+\end{equation}
+where $\mathcal{E}(A \to B)$ is the externalization of $A$'s states as observable by $B$, and vice versa. This relates to the ``interbeing space'' of generative neurophenomenology \cite{monnier2025generative}: meaningful interpersonal experience requires that both agents' internal states be sufficiently externalized to each other.
+
+When $\mathcal{M}(A, B) < r_s$, the agents interact mechanically (through environment coupling) but cannot engage in participatory sense-making---they remain strangers despite physical proximity.
+
+%% ============================================================
+\section{Distinguishing from the Markov Blanket}
+\label{sec:vs_mb}
+%% ============================================================
+
+We now make precise the relationship between the externalization horizon and the Markov blanket. The key distinctions are summarized in Table~\ref{tab:comparison}.
+
+\begin{table}[htbp]
+\centering
+\caption{Comparison of the Markov blanket and the externalization horizon.}
+\label{tab:comparison}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Property} & \textbf{Markov Blanket} & \textbf{Externalization Horizon} \\
+\midrule
+Nature & Structural (graph) & Quantitative (information) \\
+Type & Conditional independence & Information flow rate \\
+Scale & Binary (exists / doesn't) & Continuous ($\mathcal{E} \in [0, \infty)$) \\
+Parameter dep. & No & Yes ($\beta, K, \sigma_e, \sigma_\mu$) \\
+Phase transitions & No & Yes (SNR $\approx 1$) \\
+Ctrl vs.\ obs & Conflated & Separated ($\mathcal{R}_a \neq \mathcal{R}_o$) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The Markov blanket is a necessary condition for externalization: if no blanket exists (no boundary at all), externalization is undefined. But the blanket's existence is \emph{not sufficient} to guarantee that internal states have any causal footprint. A robot with sensors and actuators has a Markov blanket, but if its policy gain $K \to 0$ (it ignores its beliefs) or the environment noise $\sigma_e^2 \to \infty$ (the world drowns out its actions), its internal states are effectively dark.
+
+Our work is complementary to Possati's~\cite{possati2025density} Markov blanket density, which quantifies the \emph{structural strength} of the blanket partition (how close to perfect conditional independence), while our externalization horizon quantifies the \emph{functional consequence} of whatever blanket exists (how much information actually flows through it). An agent may have a strong blanket (high $\rho$ in Possati's framework) and yet low externalization (if the through-blanket coupling $\beta K$ is weak), or vice versa.
+
+%% ============================================================
+\section{Simulations}
+\label{sec:simulations}
+%% ============================================================
+
+We validate the analytical results through numerical simulations of the linear-Gaussian model.\footnote{Code available at \url{https://github.com/[anonymized]/externalization-horizon}.}
+
+\subsection{Setup}
+
+We simulate the coupled agent-environment system (\ref{eq:state_dynamics})--(\ref{eq:environment}) over $T = 50{,}000$ timesteps with steady-state Kalman filtering, varying effective coupling $\beta K \in [0, 5]$, environment noise $\sigma_e \in [0.1, 10]$, and policy gain $K \in [0.1, 2.0]$. For each configuration, we estimate transfer entropy $\hat{\mathcal{E}}(\mu \to e)$ using the Gaussian assumption (exact for this system): $\hat{\mathcal{E}} = \frac{1}{2}\log\bigl(\text{Var}(e_{t+1} \mid e_t) / \text{Var}(e_{t+1} \mid e_t, \mu_t)\bigr)$, computed via linear regression residuals.
+
+\subsection{Results}
+
+\paragraph{Phase Transition.}
+Figure~\ref{fig:phase_transition} shows externalization $\mathcal{E}$ as a function of the signal-to-noise ratio. The empirical estimates closely follow the analytical prediction $\frac{1}{2} \log(1 + \text{SNR})$. The transition at $\text{SNR} \approx 1$ is clearly visible: below this threshold, externalization is negligible (dark regime); above it, internal states become increasingly transparent.
+
+\paragraph{Horizon Surface.}
+Figure~\ref{fig:horizon_surface} shows externalization as a function of both $\beta K$ and $\sigma_e$, revealing the horizon surface---the locus where $\mathcal{E} = r_s$. The surface has the characteristic shape of a noise-coupling trade-off: higher noise requires stronger coupling to maintain externalization above threshold.
+
+\paragraph{Multi-Agent Inference.}
+Figure~\ref{fig:multi_agent} compares the screen and direct-access scenarios. In the screen scenario, the observer's inference degrades with environment noise; in the direct-access scenario, only action noise matters. The gap widens as environment noise increases, demonstrating information loss through environmental mediation.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/phase_transition.pdf}
+    \caption{Externalization as a function of signal-to-noise ratio. Blue markers: empirical estimates from simulation. Orange crosses: analytical prediction using conditional $\sigma_\mu$. Solid line: theoretical $\frac{1}{2}\log(1 + \text{SNR})$. Dashed red line: $\text{SNR} = 1$ critical point.}
+    \label{fig:phase_transition}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/horizon_surface.pdf}
+    \caption{The externalization horizon surface. Color indicates externalization strength. The white contour marks $\mathcal{E} = r_s = 0.5$ nats, defining the boundary between the dark (opaque) and transparent (readable) regimes.}
+    \label{fig:horizon_surface}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/multi_agent.pdf}
+    \caption{Observer's inferrable externalization under the screen (environment-mediated, blue dashed) and direct-access (red dotted) scenarios, as a function of environment noise $\sigma_e$. Direct access maintains high externalization regardless of environment noise. The gray region marks the dark regime below $r_s = 0.5$ nats.}
+    \label{fig:multi_agent}
+\end{figure}
+
+%% ============================================================
+\section{Discussion}
+\label{sec:discussion}
+%% ============================================================
+
+\subsection{Implications for AGI Interpretability}
+
+The externalization horizon provides a principled framework for understanding when an AI system's internal states are interpretable. Current approaches to interpretability focus on architectural transparency (attention visualization) or post-hoc explanation (SHAP values). Our framework asks a more fundamental question: does the system's architecture and coupling to the world permit externalization at all? An AGI system operating below the externalization horizon would be fundamentally opaque---not because we lack the right tools, but because its internal states are causally disconnected from observable behavior. This has direct implications for AI safety: alignment verification requires that the agent's goals and beliefs be externalized in principle.
+
+\subsection{Connection to Empowerment and Agency}
+
+Our controllability measure $\mathcal{R}_a$ is closely related to empowerment \cite{klyubin2005empowerment} but with a crucial distinction. Empowerment maximizes $I(a_t; s_{t+1})$---the channel capacity from actions to states. Our measure computes $I(\mu_t; e_{t+1})$---the actual information flow from beliefs to environment under the current policy. This parallels the distinction between Kolchinsky and Wolpert's~\cite{kolchinsky2018semantic} viability \emph{value} of information (the minimum required for self-maintenance) and the actual information rate. An agent is genuinely ``agentic'' not merely when it \emph{could} influence the world (empowerment), but when it \emph{does} influence the world through its beliefs (externalization).
+
+\subsection{The Robot as Stranger}
+
+Our framework formalizes a concern raised in recent discussions of synthetic neurophenomenology \cite{monnier2025generative}: the robot is fundamentally a ``stranger.'' In human-human interaction, both agents have rich interoceptive feedback that enables mutual incorporation---the felt sense of sharing an experiential space. A robot, with limited sensors and actuators, may have a well-defined Markov blanket but an externalization horizon that is far smaller than a human's. The mutual externalization $\mathcal{M}(A, B)$ quantifies this asymmetry. Even if the human fully externalizes to the robot, the robot's externalization may be below threshold---the human cannot read the robot's ``intentions'' because there is insufficient causal coupling from beliefs to observable behavior.
+
+\subsection{Connection to Phenomenological Privacy}
+
+If some internal states are \emph{in principle} beyond the externalization horizon, the horizon provides a formal boundary between the \textbf{communicable} (states above the horizon, accessible through externalization and inference) and the \textbf{private} (states below the horizon, causally disconnected from the observable world). This is not a claim about consciousness per se, but a structural observation: the externalization horizon partitions cognitive states into those that can participate in shared reality and those that cannot. Whether the ``private'' states constitute subjective experience is a question our framework poses but does not answer.
+
+\subsection{Limitations and Future Work}
+
+Our analysis is limited to linear-Gaussian systems where closed-form results are available. Key extensions include: (i)~\textbf{nonlinear systems} with state-dependent horizons, where the 2026 differential flatness framework for active inference \cite{friston2026flatness} may provide analytical handles; (ii)~\textbf{hierarchical models} where different levels of a deep temporal model may have different externalization radii; (iii)~\textbf{active externalization}---agents that \emph{choose} to externalize or conceal their internal states, connecting to communication, deception, and signaling \cite{albarracin2026empathy}; (iv)~\textbf{empirical validation} in embodied robotic systems and human-robot interaction; and (v)~\textbf{information-geometric structure}---exploring whether the horizon admits a geometric interpretation where the ``curvature'' of information space determines the horizon radius, building on the information geometry of Markov blankets \cite{parr2020information}.
+
+%% ============================================================
+\section{Conclusion}
+\label{sec:conclusion}
+%% ============================================================
+
+We have introduced the externalization horizon: an information-theoretic boundary that determines when an active inference agent's internal states can be externalized to, or inferred from, the observable world. Unlike the Markov blanket, which provides a structural partition, the externalization horizon is a continuous, parameter-dependent measure that admits phase transitions. We derived closed-form expressions for a linear-Gaussian agent, identified critical thresholds where externalization collapses, and extended the framework to multi-agent settings with two observation regimes.
+
+The externalization horizon provides a unified language for questions spanning AGI interpretability (when can we read an AI's goals?), multi-agent coordination (when can agents model each other?), and the philosophy of mind (what is the boundary between communicable and private cognitive states?). By moving beyond the binary question of ``does a boundary exist?'' to the quantitative question of ``how permeable is the boundary?,'' we open new avenues for understanding the conditions under which minds---biological or artificial---become mutually intelligible.
+
+%% ============================================================
+% Bibliography
+%% ============================================================
+
+\bibliographystyle{splncs04}
+\begin{thebibliography}{99}
+
+\bibitem{friston2006free}
+Friston, K., Kilner, J., Harrison, L.: A free energy principle for the brain. J. Physiol.\ Paris \textbf{100}(1--3), 70--87 (2006)
+
+\bibitem{friston2010free}
+Friston, K.: The free-energy principle: a unified brain theory? Nat. Rev. Neurosci. \textbf{11}(2), 127--138 (2010)
+
+\bibitem{parr2022active}
+Parr, T., Pezzulo, G., Friston, K.J.: Active Inference: The Free Energy Principle in Mind, Brain, and Behavior. MIT Press (2022)
+
+\bibitem{parr2019generalized}
+Parr, T., Friston, K.: Generalised free energy and active inference. Biol. Cybern. \textbf{113}, 495--513 (2019)
+
+\bibitem{pearl1988probabilistic}
+Pearl, J.: Probabilistic Reasoning in Intelligent Systems. Morgan Kaufmann (1988)
+
+\bibitem{friston2013life}
+Friston, K.: Life as we know it. J. R. Soc. Interface \textbf{10}(86), 20130475 (2013)
+
+\bibitem{kirchhoff2018markov}
+Kirchhoff, M., Parr, T., Palacios, E., Friston, K., Kiverstein, J.: The Markov blankets of life: autonomy, active inference and the free energy principle. J. R. Soc. Interface \textbf{15}(138), 20170792 (2018)
+
+\bibitem{ramstead2023bayesian}
+Ramstead, M.J.D., Sakthivadivel, D.A.R., Heins, C., et al.: On Bayesian mechanics: a physics of and by beliefs. Interface Focus \textbf{13}(3), 20220029 (2023)
+
+\bibitem{bruineberg2022emperor}
+Bruineberg, J., Dolega, K., Dewhurst, J., Baltieri, M.: The Emperor's New Markov Blankets. Behav. Brain Sci. \textbf{45}, e183 (2022)
+
+\bibitem{raja2021free}
+Raja, V., Valluri, D., Baggs, E., Chemero, A., Anderson, M.L.: The Markov blanket trick: on the scope of the free energy principle and active inference. Phys. Life Rev. \textbf{39}, 49--72 (2021)
+
+\bibitem{biehl2021technical}
+Biehl, M., Pollock, F.A., Kanai, R.: A technical critique of some parts of the free energy principle. Entropy \textbf{23}(3), 293 (2021)
+
+\bibitem{aguilera2022particular}
+Aguilera, M., Millidge, B., Tschantz, A., Buckley, C.L.: How particular is the physics of the free energy principle? Phys. Life Rev. \textbf{40}, 24--50 (2022)
+
+\bibitem{aguilera2023knitting}
+Aguilera, M., Millidge, B., Tschantz, A., Buckley, C.L.: Knitting a Markov blanket is hard when you are out-of-equilibrium. In: Active Inference, pp.~59--73. Springer (2023)
+
+\bibitem{parr2020information}
+Parr, T., Da Costa, L., Friston, K.: Markov blankets, information geometry and stochastic thermodynamics. Phil. Trans. R. Soc. A \textbf{378}(2164), 20190159 (2020)
+
+\bibitem{possati2025density}
+Possati, L.M.: Markov blanket density and free energy minimization. arXiv:2506.05794 (2025)
+
+\bibitem{sakthivadivel2022weak}
+Sakthivadivel, D.A.R.: Weak Markov blankets in high-dimensional, sparsely-coupled random dynamical systems. arXiv:2207.07620 (2022)
+
+\bibitem{klyubin2005empowerment}
+Klyubin, A.S., Polani, D., Nehaniv, C.L.: Empowerment: a universal agent-centric measure of control. In: IEEE Congress on Evolutionary Computation, pp.~128--135 (2005)
+
+\bibitem{salge2014empowerment}
+Salge, C., Glackin, C., Polani, D.: Empowerment---an introduction. In: Guided Self-Organization: Inception, pp.~67--114. Springer (2014)
+
+\bibitem{kiefer2025empowerment}
+Kiefer, A.: Empowerment, free energy, and causal path entropy are the same thing. Entropy \textbf{27}(4) (2025)
+
+\bibitem{schreiber2000measuring}
+Schreiber, T.: Measuring information transfer. Phys. Rev. Lett. \textbf{85}(2), 461 (2000)
+
+\bibitem{barnett2009granger}
+Barnett, L., Barrett, A.B., Seth, A.K.: Granger causality and transfer entropy are equivalent for Gaussian variables. Phys. Rev. Lett. \textbf{103}(23), 238701 (2009)
+
+\bibitem{ay2008information}
+Ay, N., Polani, D.: Information flows in causal networks. Adv. Complex Syst. \textbf{11}(1), 17--41 (2008)
+
+\bibitem{kolchinsky2018semantic}
+Kolchinsky, A., Wolpert, D.H.: Semantic information, autonomous agency and non-equilibrium statistical physics. Interface Focus \textbf{8}(6), 20180041 (2018)
+
+\bibitem{lizier2008phase}
+Lizier, J.T., Prokopenko, M., Zomaya, A.Y.: Local information transfer as a spatiotemporal filter for complex systems. Phys. Rev. E \textbf{77}(2), 026110 (2008)
+
+\bibitem{baker2017rational}
+Baker, C.L., Jara-Ettinger, J., Saxe, R., Tenenbaum, J.B.: Rational quantitative attribution of beliefs, desires and percepts in human mentalizing. Nat. Hum. Behav. \textbf{1}(4), 0064 (2017)
+
+\bibitem{rabinowitz2018machine}
+Rabinowitz, N., Perbet, F., Song, H.F., Zhang, C., Eslami, S.M.A., Botvinick, M.: Machine theory of mind. In: ICML, PMLR \textbf{80}, pp.~4218--4227 (2018)
+
+\bibitem{friston2015duet}
+Friston, K., Frith, C.: A duet for one. Conscious. Cogn. \textbf{36}, 390--405 (2015)
+
+\bibitem{veissiere2020thinking}
+Veissi\`{e}re, S.P.L., Constant, A., Ramstead, M.J.D., Friston, K.J., Kirmayer, L.J.: Thinking through other minds: a variational approach to cognition and culture. Behav. Brain Sci. \textbf{43}, e90 (2020)
+
+\bibitem{vasil2020communication}
+Vasil, J., Badcock, P.B., Constant, A., Friston, K., Ramstead, M.J.D.: A world unto itself: human communication as active inference. Front. Psychol. \textbf{11}, 417 (2020)
+
+\bibitem{maisto2023interactive}
+Maisto, D., Donnarumma, F., Pezzulo, G.: Interactive inference: a multi-agent model of cooperative joint actions. IEEE Trans. Syst. Man Cybern.: Systems (2023)
+
+\bibitem{albarracin2024protentions}
+Albarracin, M., Pitliya, R.J., St~Clere~Smithe, T., Friedman, D.A., Friston, K., Ramstead, M.J.D.: Shared protentions in multi-agent active inference. Entropy \textbf{26}(4), 303 (2024)
+
+\bibitem{albarracin2026empathy}
+Albarracin, M., Mikeda, A., Jimenez~Rodriguez, A., et al.: Empathy modeling in active inference agents for perspective-taking and alignment. arXiv:2602.20936 (2026)
+
+\bibitem{monnier2025generative}
+Monnier, A., Adel, L., Dumas, G.: Now is the time: operationalizing generative neurophenomenology through interpersonal methods. Neurosci. Conscious. \textbf{2025}(1), niaf052 (2025)
+
+\bibitem{varela1996neurophenomenology}
+Varela, F.J.: Neurophenomenology: a methodological remedy for the hard problem. J. Conscious. Stud. \textbf{3}(4), 330--349 (1996)
+
+\bibitem{ramstead2022generative}
+Ramstead, M.J.D., Seth, A.K., Hesp, C., et al.: From generative models to generative passages: a computational approach to (neuro) phenomenology. Rev. Philos. Psychol. \textbf{13}(4), 829--857 (2022)
+
+\bibitem{sandvedsmith2025deep}
+Sandved-Smith, L., Bogota, J.D., Hohwy, J., Kiverstein, J., Lutz, A.: Deep computational neurophenomenology: a methodological framework. Neurosci. Conscious. \textbf{2025}(1), niaf016 (2025)
+
+\bibitem{friston2008variational}
+Friston, K.: Variational filtering. NeuroImage \textbf{41}(3), 747--766 (2008)
+
+\bibitem{baltieri2020kalman}
+Baltieri, M., Buckley, C.L.: On Kalman-Bucy filters, linear quadratic control and active inference. arXiv:2005.06269 (2020)
+
+\bibitem{koudahl2021efe}
+Koudahl, M.T., Kouw, W.M., de~Vries, B.: On epistemics in expected free energy for linear Gaussian state space models. Entropy \textbf{23}(12), 1565 (2021)
+
+\bibitem{cover2006elements}
+Cover, T.M., Thomas, J.A.: Elements of Information Theory, 2nd edn. Wiley (2006)
+
+\bibitem{baltieri2020bayesian}
+Baltieri, M., Buckley, C.L.: A Bayesian perspective on classical control. arXiv:2004.10288 (2020)
+
+\bibitem{dragan2013legibility}
+Dragan, A.D., Lee, K.C.T., Srinivasa, S.S.: Legibility and predictability of robot motion. In: HRI '13, pp.~301--308. ACM/IEEE (2013)
+
+\bibitem{friston2026flatness}
+Friston, K., Mounier, H., et al.: Active inference and functional parametrisation: differential flatness and smooth random realisation. Entropy \textbf{28}(1), 87 (2026)
+
+\bibitem{dacosta2020discrete}
+Da~Costa, L., Parr, T., Sajid, N., Veseli\'{c}, S., Neacsu, V., Friston, K.: Active inference on discrete state-spaces: a synthesis. J. Math. Psychol. \textbf{99}, 102447 (2020)
+
+\bibitem{friston2012optimal}
+Friston, K., Samothrakis, S., Montague, R.: Active inference and agency: optimal control without cost functions. Biol. Cybern. \textbf{106}, 523--541 (2012)
+
+\bibitem{dacosta2021neural}
+Da~Costa, L., Parr, T., Sengupta, B., Friston, K.: Neural dynamics under active inference: plausibility and efficiency of information processing. Entropy \textbf{23}(4), 454 (2021)
+
+\end{thebibliography}
+
+\end{document}
